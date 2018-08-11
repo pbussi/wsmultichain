@@ -7,10 +7,11 @@
 var app = require('../app');
 var debug = require('debug')('wsmultichain:server');
 var http = require('http');
-
+var fs = require('fs');
 /**
  * Get port from environment and store in Express.
  */
+ //process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
@@ -18,9 +19,12 @@ app.set('port', port);
 /**
  * Create HTTP server.
  */
-
+ var options = {
+   key: fs.readFileSync('./bin/key.pem').toString(),
+   cert: fs.readFileSync('./bin/certificate.pem').toString()
+ };
+//var server = http.createServer(options,app);
 var server = http.createServer(app);
-
 /**
  * Listen on provided port, on all network interfaces.
  */
