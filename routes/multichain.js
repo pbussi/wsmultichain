@@ -5,6 +5,7 @@ const request = require('request');
 let chain = 'devnet';
 let burnaddress='1XXXXXXX1XXXXXXXBtXXXXXXeyXXXXXXbBxUxP';
 let masteraddress='14qWfFFiKZgTbFNarcgDdZq5Vsahki5fsfAXVE';
+let asset = "Patacon";
 let options = {
   url: "http://192.168.1.107:5746",
   method: "POST",
@@ -52,7 +53,6 @@ router.get('/nuevo/:usuario_id', function(req, res, next) {
       res.send(error);
     } else {
       respuesta = JSON.parse(body);
-      console.log(respuesta);
       options.body = JSON.stringify({
         "method": "grant",
         "params": [respuesta.result, "send,receive"],
@@ -64,7 +64,6 @@ router.get('/nuevo/:usuario_id', function(req, res, next) {
           res.send(error);
         } else {
           respuesta2 = JSON.parse(body);
-          console.log(respuesta2);
           options.body = JSON.stringify({
             "method": "publishfrom",
             "params": [respuesta.result, "usuarios", req.params.usuario_id, "3230323335353032393835"],
@@ -126,12 +125,11 @@ router.get('/saldo/:address', function(req, res, next) {
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
-router.get('/agregar_movimiento/:cartera_id/:hasta/:monto', function(req, res, next) {
-  //{"method":"issuemorefrom","params":["14qWfFFiKZgTbFNarcgDdZq5Vsahki5fsfAXVE","1TMQn23U3pjmLtbnXLp5JihqXzUmCDLuVwwbdo","Patacon",150,0,{"concepto":"sdfas","factura_id":"sdfads","acreedor":"asdfas"}],"id":1,"chain_name":"devnet"}
-
+router.get('/agregar_movimiento/:cartera_id/:concepto/:monto/:factura_id/:acreedor', function(req, res, next) {
   options.body = JSON.stringify({
-    "method": "sendassetfrom",
-    "params": [req.params.desde, req.params.hasta, "patacon3", parseInt(req.params.monto)],
+    "method": "issuemorefrom",
+    "params": [masteraddress, req.params.cartera_id, asset, parseInt(req.params.monto),0,
+      {"concepto":req.params.concepto,"factura_id":req.params.factura_id,"acreedor":req.params.acreedor}],
     "id": 1,
     "chain_name": chain
   })
@@ -148,8 +146,24 @@ router.get('/agregar_movimiento/:cartera_id/:hasta/:monto', function(req, res, n
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
-//quemar
-
+router.get('/quemar/:cartera_id/:concepto/:monto/:factura_id', function(req, res, next) {
+  options.body = JSON.stringify({
+    "method": "sendassetfrom",
+    "params": [req.params.cartera_id, burnaddress,asset, parseInt(req.params.monto),0,
+      '{"concepto":"'+req.params.concepto+'","factura_id":"'+req.params.factura_id+
+      '","acreedor":"'+req.params.acreedor+'"}'],
+    "id": 1,
+    "chain_name": chain
+  })
+  request(options, (error, response, body) => {
+    if (error) {
+      res.send(error);
+    } else {
+      console.log(body);
+      res.json(JSON.parse(body));
+    }
+  });
+});
 
 /*******************************************************************/
 /*******************************************************************/
@@ -162,7 +176,6 @@ router.get('/movimientos/:address', function(req, res, next) {
     } else {
       var todos=JSON.parse(body);
       todos=todos.result;
-      console.log(todos);
       var movimientos = todos.filter(function(d) { return d.balance.assets.length>0; });
       res.json(movimientos);
     }
