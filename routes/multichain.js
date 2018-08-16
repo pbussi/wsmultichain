@@ -3,18 +3,18 @@ var router = express.Router();
 const request = require('request');
 
 var chain = 'devnet';
-var burnaddress = '1XXXXXXWfXXXXXXXQuXXXXXXZEXXXXXXUA5qgu';
-var masteraddress = '1F5CQBspLnoj5W55cL2WvuXnh7ZkPoLcWvfEcN';
-var asset = "Bolivar";
+var burnaddress = '1XXXXXXXd4XXXXXXgMXXXXXXUPXXXXXXTvtX2d';
+var masteraddress = '17jRtkVEGJmo9KkK15E9tyviquVtuWt8t8VnMJ';
+var asset = "Pesos";
 var options = {
-  url: "http://127.0.0.1:8344",
+  url: "http://158.69.63.214:8080/",
   method: "POST",
   headers: {
     "content-type": "text/plain"
   },
   auth: {
     user: 'multichainrpc',
-    pass: '53XiSM4ctSTKYaomqNByH2H4mRPYaCMJzSqF7zEntXqZ'
+    pass: 'Gwc9pNzRvAv4dyQB6QW8LzbVxuMBsYWXoUytXBJyS3UT'
   },
 };
 
