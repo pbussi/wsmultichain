@@ -214,6 +214,51 @@ router.get('/agregar_movimiento/:cartera_id/:concepto/:monto/:factura_id/:acreed
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
+router.get('/transferir/:cartera_id/:destino/:concepto/:monto/:factura_id/:acreedor/:codigo_m', function(req, res, next) {
+  options.body = JSON.stringify({
+    "method": "liststreampublisheritems",
+    "params": ["codigos", req.params.cartera_id, false, 1],
+    "id": 1,
+    "chain_name": chain
+  });
+  request(options, (error, response, body) => {
+    if (error) {
+      res.send(error);
+    } else {
+      codigos = JSON.parse(body);
+      console.log(codigos);
+      if (codigos.error != null || codigos.result[0].key != req.params.codigo_m) {
+        res.send({
+          "error": "codigo incorrecto"
+        });
+      } else {
+        options.body = JSON.stringify({
+          "method": "sendassetfrom",
+          "params": [req.params.cartera_id, req.params.destino, asset, parseInt(req.params.monto), 0,
+            '{"concepto":"' + req.params.concepto + '","factura_id":"' + req.params.factura_id +
+            '","acreedor":"' + req.params.acreedor + '"}'
+          ],
+          "id": 1,
+          "chain_name": chain
+        })
+        request(options, (error, response, body) => {
+          if (error) {
+            res.send(error);
+          } else {
+            console.log(body);
+            res.json(JSON.parse(body));
+          }
+        });
+      }
+    }
+
+  });
+
+});
+
+/*******************************************************************/
+/*******************************************************************/
+/*******************************************************************/
 router.get('/quemar/:cartera_id/:concepto/:monto/:factura_id/:codigo_m', function(req, res, next) {
   options.body = JSON.stringify({
     "method": "liststreampublisheritems",
@@ -255,6 +300,7 @@ router.get('/quemar/:cartera_id/:concepto/:monto/:factura_id/:codigo_m', functio
   });
 
 });
+
 
 /*******************************************************************/
 /*******************************************************************/
