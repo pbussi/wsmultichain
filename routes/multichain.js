@@ -347,7 +347,7 @@ router.get('/movimientos/:address/:codigo_m', function(req, res, next) {
 /*******************************************************************/
 /*******************************************************************/
 router.get('/admin/:clave/cambia_codigo/:cartera_id/:nuevo_codigo_m', function(req, res, next) {
-  if (req.params.clave != options.admin_clave) {
+  if (req.params.clave != config.admin_clave) {
     res.send({
       "error": "codigo incorrecto"
     });
