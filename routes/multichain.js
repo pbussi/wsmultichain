@@ -26,8 +26,9 @@ router.get('/getinfo', function(req, res, next) {
   })
   request(options, (error, response, body) => {
     if (error) {
-      res.send(error);
+      res.send({"error":error.code});
     } else {
+      //res.send(Buffer.from('hello world', 'utf8').toString('hex'));
       res.json(JSON.parse(body));
     }
   });
@@ -37,7 +38,7 @@ router.get('/getinfo', function(req, res, next) {
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
-router.get('/nuevo/:usuario_id/:codigo_m', function(req, res, next) {
+router.get('/nuevo/:usuario_id/:codigo_m/:solicitud_id', function(req, res, next) {
   options.body = JSON.stringify({
     "method": "getnewaddress",
     "params": [],
@@ -46,7 +47,7 @@ router.get('/nuevo/:usuario_id/:codigo_m', function(req, res, next) {
   })
   request(options, (error, response, body) => {
     if (error) {
-      res.send(error);
+      res.send({"error":error.code});
     } else {
       respuesta = JSON.parse(body);
       options.body = JSON.stringify({
@@ -57,32 +58,34 @@ router.get('/nuevo/:usuario_id/:codigo_m', function(req, res, next) {
       });
       request(options, (error, response, body) => {
         if (error) {
-          res.send(error);
+          res.send({"error":error.code});
         } else {
           respuesta2 = JSON.parse(body);
           options.body = JSON.stringify({
             "method": "publishfrom",
-            "params": [respuesta.result, "usuarios", req.params.usuario_id, "3230323335353032393835"],
+            "params": [respuesta.result, "usuarios", req.params.usuario_id, Buffer.from(req.params.solicitud_id, 'utf8').toString('hex')],
             "id": 1,
             "chain_name": chain
           });
           request(options, (error, response, body) => {
             if (error) {
-              res.send(error);
+              res.send({"error":error.code});
             } else {
               respuesta3 = JSON.parse(body);
               options.body = JSON.stringify({
                 "method": "publishfrom",
-                "params": [respuesta.result, "codigos", req.params.codigo_m, "3230323335353032393835"],
+                "params": [respuesta.result, "codigos", req.params.codigo_m, Buffer.from(req.params.solicitud_id, 'utf8').toString('hex')],
                 "id": 1,
                 "chain_name": chain
               });
               request(options, (error, response, body) => {
                 if (error) {
-                  res.send(error);
+                  res.send({"error":error.code});
                 } else {
                   res.json({
-                    'cartera_direccion': respuesta.result
+                    'cartera_direccion': respuesta.result,
+                    'solicitud_id':req.params.solicitud_id,
+                    'error':null
                   });
                 }
               });
@@ -106,7 +109,7 @@ router.get('/cuentas', function(req, res, next) {
   })
   request(options, (error, response, body) => {
     if (error) {
-      res.send(error);
+      res.send({"error":error.code});
     } else {
       res.json(JSON.parse(body));
     }
@@ -118,7 +121,7 @@ router.get('/cuentas', function(req, res, next) {
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
-router.get('/saldo/:address/:codigo_m', function(req, res, next) {
+router.get('/saldo/:address/:codigo_m/:solicitud_id', function(req, res, next) {
   options.body = JSON.stringify({
     "method": "liststreampublisheritems",
     "params": ["codigos", req.params.address, false, 1],
@@ -127,7 +130,7 @@ router.get('/saldo/:address/:codigo_m', function(req, res, next) {
   });
   request(options, (error, response, body) => {
     if (error) {
-      res.send(error);
+      res.send({"error":error.code});
     } else {
       codigos = JSON.parse(body);
       console.log(codigos);
@@ -144,9 +147,11 @@ router.get('/saldo/:address/:codigo_m', function(req, res, next) {
         });
         request(options, (error, response, body) => {
           if (error) {
-            res.send(error);
+            res.send({"error":error.code});
           } else {
-            res.json(JSON.parse(body));
+            respuesta=JSON.parse(body);
+            respuesta.solicitud_id=req.params.solicitud_id;
+            res.json(respuesta);
           }
         });
       }
@@ -159,7 +164,7 @@ router.get('/saldo/:address/:codigo_m', function(req, res, next) {
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
-router.get('/agregar_movimiento/:cartera_id/:concepto/:monto/:factura_id/:acreedor/:codigo_m', function(req, res, next) {
+router.get('/agregar_movimiento/:cartera_id/:concepto/:monto/:factura_id/:acreedor/:codigo_m/:solicitud_id', function(req, res, next) {
 
   options.body = JSON.stringify({
     "method": "liststreampublisheritems",
@@ -169,12 +174,9 @@ router.get('/agregar_movimiento/:cartera_id/:concepto/:monto/:factura_id/:acreed
   });
   request(options, (error, response, body) => {
     if (error) {
-      res.send(error);
+      res.send({"error":error.code});
     } else {
       codigos = JSON.parse(body);
-      console.log(options)
-      console.log(codigos);
-
       if (codigos.error != null || codigos.result[0].key != req.params.codigo_m) {
         res.send({
           "error": "codigo incorrecto"
@@ -186,7 +188,8 @@ router.get('/agregar_movimiento/:cartera_id/:concepto/:monto/:factura_id/:acreed
             {
               "concepto": req.params.concepto,
               "factura_id": req.params.factura_id,
-              "acreedor": req.params.acreedor
+              "acreedor": req.params.acreedor,
+              "solicitud_id":req.params.solicitud_id
             }
           ],
           "id": 1,
@@ -194,9 +197,11 @@ router.get('/agregar_movimiento/:cartera_id/:concepto/:monto/:factura_id/:acreed
         })
         request(options, (error, response, body) => {
           if (error) {
-            res.send(error);
+            res.send({"error":error.code});
           } else {
-            res.json(JSON.parse(body));
+            respuesta=JSON.parse(body);
+            respuesta.solicitud_id=req.params.solicitud_id;
+            res.json(respuesta);
           }
         });
       }
@@ -210,7 +215,7 @@ router.get('/agregar_movimiento/:cartera_id/:concepto/:monto/:factura_id/:acreed
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
-router.get('/transferir/:cartera_id/:destino/:concepto/:monto/:factura_id/:acreedor/:codigo_m', function(req, res, next) {
+router.get('/transferir/:cartera_id/:destino/:concepto/:monto/:factura_id/:acreedor/:codigo_m/:solicitud_id', function(req, res, next) {
   options.body = JSON.stringify({
     "method": "liststreampublisheritems",
     "params": ["codigos", req.params.cartera_id, false, 1],
@@ -219,10 +224,9 @@ router.get('/transferir/:cartera_id/:destino/:concepto/:monto/:factura_id/:acree
   });
   request(options, (error, response, body) => {
     if (error) {
-      res.send(error);
+      res.send({"error":error.code});
     } else {
       codigos = JSON.parse(body);
-      console.log(codigos);
       if (codigos.error != null || codigos.result[0].key != req.params.codigo_m) {
         res.send({
           "error": "codigo incorrecto"
@@ -232,17 +236,18 @@ router.get('/transferir/:cartera_id/:destino/:concepto/:monto/:factura_id/:acree
           "method": "sendassetfrom",
           "params": [req.params.cartera_id, req.params.destino, asset, parseInt(req.params.monto), 0,
             '{"concepto":"' + req.params.concepto + '","factura_id":"' + req.params.factura_id +
-            '","acreedor":"' + req.params.acreedor + '"}'
+            '","acreedor":"' + req.params.acreedor + '","solicitud_id":"' + req.params.solicitud_id +'"}'
           ],
           "id": 1,
           "chain_name": chain
         })
         request(options, (error, response, body) => {
           if (error) {
-            res.send(error);
+            res.send({"error":error.code});
           } else {
-            console.log(body);
-            res.json(JSON.parse(body));
+            respuesta=JSON.parse(body);
+            respuesta.solicitud_id=req.params.solicitud_id;
+            res.json(respuesta);
           }
         });
       }
@@ -255,7 +260,7 @@ router.get('/transferir/:cartera_id/:destino/:concepto/:monto/:factura_id/:acree
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
-router.get('/quemar/:cartera_id/:concepto/:monto/:factura_id/:codigo_m', function(req, res, next) {
+router.get('/quemar/:cartera_id/:concepto/:monto/:factura_id/:codigo_m/:solicitud_id', function(req, res, next) {
   options.body = JSON.stringify({
     "method": "liststreampublisheritems",
     "params": ["codigos", req.params.cartera_id, false, 1],
@@ -264,7 +269,7 @@ router.get('/quemar/:cartera_id/:concepto/:monto/:factura_id/:codigo_m', functio
   });
   request(options, (error, response, body) => {
     if (error) {
-      res.send(error);
+      res.send({"error":error.code});
     } else {
       codigos = JSON.parse(body);
       console.log(codigos);
@@ -277,17 +282,18 @@ router.get('/quemar/:cartera_id/:concepto/:monto/:factura_id/:codigo_m', functio
           "method": "sendassetfrom",
           "params": [req.params.cartera_id, burnaddress, asset, parseInt(req.params.monto), 0,
             '{"concepto":"' + req.params.concepto + '","factura_id":"' + req.params.factura_id +
-            '","acreedor":"' + req.params.acreedor + '"}'
+            '","acreedor":"' + req.params.acreedor + '","solicitud_id":"' + req.params.solicitud_id + '"}'
           ],
           "id": 1,
           "chain_name": chain
         })
         request(options, (error, response, body) => {
           if (error) {
-            res.send(error);
+            res.send({"error":error.code});
           } else {
-            console.log(body);
-            res.json(JSON.parse(body));
+            respuesta=JSON.parse(body);
+            respuesta.solicitud_id=req.params.solicitud_id;
+            res.json(respuesta);
           }
         });
       }
@@ -301,7 +307,7 @@ router.get('/quemar/:cartera_id/:concepto/:monto/:factura_id/:codigo_m', functio
 /*******************************************************************/
 /*******************************************************************/
 /*******************************************************************/
-router.get('/movimientos/:address/:codigo_m', function(req, res, next) {
+router.get('/movimientos/:address/:codigo_m/:solicitud_id', function(req, res, next) {
   options.body = JSON.stringify({
     "method": "liststreampublisheritems",
     "params": ["codigos", req.params.address, false, 1],
@@ -310,7 +316,7 @@ router.get('/movimientos/:address/:codigo_m', function(req, res, next) {
   });
   request(options, (error, response, body) => {
     if (error) {
-      res.send(error);
+      res.send({"error":error.code});
     } else {
       codigos = JSON.parse(body);
       console.log(codigos);
@@ -327,14 +333,14 @@ router.get('/movimientos/:address/:codigo_m', function(req, res, next) {
         })
         request(options, (error, response, body) => {
           if (error) {
-            res.send(error);
+            res.send({"error":error.code});
           } else {
             var todos = JSON.parse(body);
             todos = todos.result;
             var movimientos = todos.filter(function(d) {
               return d.balance.assets.length > 0;
             });
-            res.json(movimientos);
+            res.json({"movimientos":movimientos,"solicitud_id":req.params.solicitud_id});
           }
         });
       }
@@ -361,7 +367,7 @@ router.get('/admin/:clave/cambia_codigo/:cartera_id/:nuevo_codigo_m', function(r
 
     request(options, (error, response, body) => {
       if (error) {
-        res.send(error);
+        res.send({"error":error.code});
       } else {
         res.json(JSON.parse(body));
       }
@@ -386,7 +392,7 @@ router.get('/admin/:clave/movimientos/:address', function(req, res, next) {
   })
   request(options, (error, response, body) => {
     if (error) {
-      res.send(error);
+      res.send({"error":error.code});
     } else {
       var todos = JSON.parse(body);
       todos = todos.result;
