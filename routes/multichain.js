@@ -113,7 +113,7 @@ router.get('/nuevo/:usuario_id/:codigo_m/:solicitud_id', function(req, res, next
 router.get('/cuentas', function(req, res, next) {
     options.body = JSON.stringify({
         "method": "liststreamitems",
-        "params": ["usuarios"],
+        "params": ["usuarios",false,99999],
         "id": 1,
         "chain_name": chain
     })
